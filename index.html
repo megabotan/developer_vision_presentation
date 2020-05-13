@@ -1,50 +1,274 @@
 <!doctype html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>reveal.js</title>
+    <title>reveal.js</title>
 
-		<link rel="stylesheet" href="css/reset.css">
-		<link rel="stylesheet" href="css/reveal.css">
-		<link rel="stylesheet" href="css/theme/black.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/black.css">
 
-		<!-- Theme used for syntax highlighting of code -->
-		<link rel="stylesheet" href="lib/css/monokai.css">
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/monokai.css">
 
-		<!-- Printing and PDF exports -->
-		<script>
-			var link = document.createElement( 'link' );
-			link.rel = 'stylesheet';
-			link.type = 'text/css';
-			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
-			document.getElementsByTagName( 'head' )[0].appendChild( link );
-		</script>
-	</head>
-	<body>
-		<div class="reveal">
-			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
-			</div>
-		</div>
+    <!-- Printing and PDF exports -->
+    <script>
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+        document.getElementsByTagName('head')[0].appendChild(link);
+    </script>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section><h2>Developer vision</h2></section>
+        <section>
+            <h2>Agenda</h2>
+            <ul>
+                <li>Git repo structure</li>
+                <li>Build</li>
+                <li>Observability</li>
+                <li>CI/CD</li>
+                <li>Service configuration</li>
+                <li>Caching</li>
+                <li>Scaling</li>
+            </ul>
+        </section>
+        <section>
+            <h2>Git repo structure</h2>
+            <ul>
+                <li><p class="fragment">Similar folders structure</p></li>
+                <li><p class="fragment">Entrypoint is always main.py</p></li>
+                <li><p class="fragment">Folders for tests and scripts</p></li>
+                <li><p class="fragment">Same commands for common tasks (./scripts/run.sh или make run)</p></li>
+            </ul>
+        </section>
+        <section>
+            <section>
+                <h2>Build</h2>
+            </section>
+            <section>
+                <h2>Docker everywhere</h2>
+                <ul>
+                    <li><p class="fragment">Easy to run locally</p></li>
+                    <li><p class="fragment">Easy to run on prod</p></li>
+                </ul>
+            </section>
 
-		<script src="js/reveal.js"></script>
+            <section>
+                <h2>Requirements</h2>
+                <table class="fragment">
+                    <tr>
+                        <td>requirements.txt</td>
+                        <td>
+                            <pre><code>flask==1.1.2</code></pre>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>flask setup.py</td>
+                        <td><pre style="width: 100%"><code data-trim>
+                            install_requires=[
+                                "werkzeug>=0.15",
+                                ...]
+                        </code></pre>
+                        </td>
+                    </tr>
+                </table>
 
-		<script>
-			// More info about config & dependencies:
-			// - https://github.com/hakimel/reveal.js#configuration
-			// - https://github.com/hakimel/reveal.js#dependencies
-			Reveal.initialize({
-				hash: true,
-				dependencies: [
-					{ src: 'plugin/markdown/marked.js' },
-					{ src: 'plugin/markdown/markdown.js' },
-					{ src: 'plugin/highlight/highlight.js' },
-					{ src: 'plugin/notes/notes.js', async: true }
-				]
-			});
-		</script>
-	</body>
+                <table class="fragment">
+                    <tr>
+                        <td></td>
+                        <td>Today:</td>
+                        <td>Tomorrow:</td>
+                    </tr>
+                    <tr>
+                        <td>werkzeug release</td>
+                        <td>0.15</td>
+                        <td>1.0.2</td>
+                    </tr>
+                    <tr>
+                        <td class="fragment">result</td>
+                        <td class="fragment">
+                            <pre style="width: 100%"><code data-trim>
+                                flask==1.1.2
+                                werkzeug==0.15
+                                ...
+                            </code></pre>
+                        </td>
+                        <td class="fragment">
+                            <pre style="width: 100%"><code data-trim>
+                                flask==1.1.2
+                                werkzeug==1.0.2
+                                ...
+                            </code></pre>
+                        </td>
+                    </tr>
+                </table>
+            </section>
+            <section>
+                <h3>Solution</h3>
+                <ul>
+                    <li><p>self made</p>
+                        <pre style="width: 100%" class="bash"><code data-trim>
+                            pip install -r requirements.in
+                            pip freeze > requirements.txt
+                        </code></pre>
+                    </li>
+                    <li>
+                        <p>pip-tools</p>
+                        <pre style="width: 100%" class="bash"><code data-trim>
+                            pip-compile requirements.in
+                        </code></pre>
+
+                    </li>
+                </ul>
+            </section>
+            <section>
+                <h2>Dockerfile</h2>
+                <ul>
+                    <li class="fragment">docker layer cache</li>
+                    <li class="fragment">.dockerignore</li>
+                </ul>
+            </section>
+        </section>
+        <section>
+            <section><h2>Observability</h2></section>
+            <section>
+                <h2>logging</h2>
+                <ul>
+                    <li class="fragment">Local logging (stdout)</li>
+                    <li class="fragment">Prod logging (ELK)</li>
+                </ul>
+            </section>
+            <section><h2>monitoring(grafana)</h2></section>
+            <section>
+                <h2>tracing(jaeger)</h2>
+                <img src="https://raw.githubusercontent.com/aio-libs/aiozipkin/master/docs/jaeger.png">
+            </section>
+            <section>
+                <h2>error monitoring(sentry)</h2>
+                <img src="https://sentry.io/_assets/screenshots/features-page-dash-12c65431808e7d8daf234a096446c1f0da311a0f3bcec5352e28bda60136fb16.jpg">
+            </section>
+        </section>
+        <section><h2>CI</h2>
+            <ul>
+                <li class="fragment">Tests</li>
+                <li class="fragment">Coverage</li>
+                <li class="fragment">Lint(pep8)</li>
+                <li class="fragment">Mypy(typing)</li>
+                <li class="fragment">Vulture(dead code finder)</li>
+                <li class="fragment">...</li>
+            </ul>
+        </section>
+        <section>
+            <h2>CD</h2>
+            <ul>
+                <li class="fragment">Auto deploy to RC</li>
+                <li class="fragment">Press button to deploy on Prod</li>
+
+            </ul>
+        </section>
+        <section>
+            <section><h2>Service configuration</h2></section>
+            <section>
+                <h2>Config file</h2>
+                <ul>
+                    <li><p class="fragment">yaml</p></li>
+                    <li><p class="fragment">scaling, resources(cpu, memory)</p></li>
+                    <li><p class="fragment">external services (databases)</p></li>
+                    <li><p class="fragment">service settings</p></li>
+                    <li><p class="fragment">templates for secrets</p></li>
+                    <li><p class="fragment">helm?</p></li>
+                </ul>
+            </section>
+            <section>
+                <h2>Example</h2>
+                <pre class="yaml"><code data-trim>
+                    replicas: 3
+                    image: api_image
+                    env:
+                        - name: MYSQL_PASSWORD
+                          value: {{MYSQL_PASSWORD}}
+                    ports:
+                        - 80: 80
+                    resources:
+                      limits:
+                        memory: "128Mi"
+                        cpu: "500m"
+                </code></pre>
+            </section>
+            <section>
+                <h2>Environment variables</h2>
+                <ul>
+                    <li>Don't mount files during deploy</li>
+                    <li>Default values for local run</li>
+                    <li>Excellent support by docker/kubernetes</li>
+                </ul>
+            </section>
+            <section>
+                <h2>secrets</h2>
+                <ul>
+                    <li class="fragment">
+                        RC
+                        <ul>
+                            <li class="fragment">Full control to developer</li>
+                            <li class="fragment">RC secrets are sometimes needed for local run</li>
+                        </ul>
+                    </li>
+                    <li class="fragment">
+                        Prod
+                        <ul>
+                            <li class="fragment">Not controled by developer</li>
+                            <li class="fragment">Devops can use RC secrets as example</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p class="fragment">Vault?</p>
+            </section>
+        </section>
+        <section>
+            <h2>Caching</h2>
+            <p class="fragment">Stateless</p>
+            <p class="fragment">Use external service (Redis, Memcached)</p>
+        </section>
+        <section>
+            <section>
+                <h2>Scaling</h2>
+            </section>
+            <section>
+                <h2>Scale containers, not processes</h2>
+                <ul>
+                    <li class="fragment">Lightweight containers</li>
+                    <li class="fragment">Dont need to configure HTTP Server</li>
+                    <li class="fragment">Independent workers</li>
+                </ul>
+            </section>
+        </section>
+        <section>
+            <h2>Questions?</h2>
+        </section>
+    </div>
+</div>
+
+<script src="js/reveal.js"></script>
+
+<script>
+    // More info about config & dependencies:
+    // - https://github.com/hakimel/reveal.js#configuration
+    // - https://github.com/hakimel/reveal.js#dependencies
+    Reveal.initialize({
+        hash: true,
+        dependencies: [
+            {src: 'plugin/markdown/marked.js'},
+            {src: 'plugin/markdown/markdown.js'},
+            {src: 'plugin/highlight/highlight.js'},
+            {src: 'plugin/notes/notes.js', async: true}
+        ]
+    });
+</script>
+</body>
 </html>

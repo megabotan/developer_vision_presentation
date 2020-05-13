@@ -40,5 +40,8 @@
     "node-sass": "^4.13.1",
     "socket.io": "^2.2.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "reveal.js-menu": "^1.2.0"
+  }
 }
